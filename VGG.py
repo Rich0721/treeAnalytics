@@ -77,11 +77,25 @@ def VGGNet_nn(train_path, vali_path, storageFileName):
         validation_steps=50, callbacks=[monitor]
     )
     
-    VGGNet.save(osp.join("result", "vgg16_" + storageFileName + ".h5"))
+    VGGNet.save(osp.join("result", "vgg16_" + storageFileName + "_3.h5"))
+    plt_LineChart(history=history, netName="vgg16_" + storageFileName + ".jpg")
     end_time = time()
     mins = (end_time - start_time) // 60
     secs = (end_time - start_time) % 60
     print("VGG16 Execute time: {}:{:.2f}".format(mins, secs))
+
+def plt_LineChart(history=None, netName="test.jpg"):
+    
+    plt.figure()
+    plt.plot(history.history["loss"], label="train_loss")
+    plt.plot(history.history["val_loss"], label="val_loss")
+    plt.plot(history.history["acc"], label="train_acc")
+    plt.plot(history.history["val_acc"], label="val_acc")
+    plt.title("{} Training Loss and Accuracy on sar classifier".format(netName[:-4]))
+    plt.xlabel("Epoch #")
+    plt.ylabel("Loss/Accuracy")
+    plt.legend(loc="upper right")
+    plt.savefig(netName)
 
 if __name__ == "__main__":
     

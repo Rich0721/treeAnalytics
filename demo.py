@@ -1,17 +1,15 @@
 '''
 Authors : Rich, Wu
-Datetime: 2019/12/18
+Datetime: 2019/12/19
 Describe: Use .h5 file demo vgg16's and resnet152's accuracy in different tree
 '''
-
-
-
 
 import os
 from glob import glob
 from keras import models, optimizers
 import cv2
 import numpy as np
+from time import time
 
 DATASETS_PATH = "./datasets" 
 CLASS_PATH = ["PCA", "feature"]
@@ -19,20 +17,19 @@ CLASS_PATH = ["PCA", "feature"]
 H5_FILES_PATH = ["./result/vgg16_", "./result/resnet152_"]
 
 
-for cla in CLASS_PATH:
+def demoTree(h5File=None, datasetPath=None):
     
-    TP_vgg = 0
-    TP_resnet = 0
-    ALL = 0
-    vggModel = models.load_model(H5_FILES_PATH[0] + cla + ".h5")
-    resnetModel = models.load_model(H5_FILES_PATH[1] + cla + ".h5")
-    path = os.path.join(DATASETS_PATH, cla, "test")
-    folderList = os.listdir(path)
 
+    startTime = time()
+    TP = 0
+    ALL = 0
+
+    model = models.load_model(h5File)
+    folderList = os.listdir(os.path.join(datasetPath, "test"))
+    
     for folder in folderList:
         
-        images = glob(os.path.join(path, folder, "*.jpg"))
-        
+        images = glob(os.path.join(datasetPath, "test", folder,  "*.jpg"))
         
         for image in images:
 
@@ -41,19 +38,27 @@ for cla in CLASS_PATH:
             img = cv2.resize(img, (256, 256))
             img = np.reshape(img, (1, 256, 256, 3))
 
-            vggPredict = vggModel.predict(img)[0].tolist()
-            resnetPredict = resnetModel.predict(img)[0].tolist()
+            predict = model.predict(img)[0].tolist()
             
-            vggIndex = vggPredict.index(max(vggPredict))
-            resnetIndex = resnetPredict.index(max(resnetPredict))
             
-            if folderList[vggIndex] == folder:
-                TP_vgg += 1
-            if folderList[resnetIndex] == folder:
-                TP_resnet += 1
+            maxIndex = predict.index(max(predict))
             
+            if folderList[maxIndex] == folder:
+                TP += 1
             ALL += 1
-        
+
+    endTime = time()
+    mins = int((endTime - startTime) // 60)
+    secs = int((endTime - startTime) % 60)
     
-    print("{}: {:.2f}".format((H5_FILES_PATH[0] + cla), (TP_vgg/ ALL)))
-    print("{}: {:.2f}".format((H5_FILES_PATH[1] + cla), (TP_resnet)))
+    print("{} execute time: {}:{}".format(h5File[:-3], mins, secs))
+    print("{} accuracy: {:.2f}".format(h5File[:-3], (TP/ALL)))
+
+
+if __name__ == "__main__":
+    
+    for cla in CLASS_PATH:
+        for h5 in H5_FILES_PATH:
+            datasetPath = os.path.join(DATASETS_PATH, cla)
+            h5file = h5 + cla + "_3.h5"
+            demoTree(h5File=h5file, datasetPath=datasetPath)
